@@ -1,7 +1,2 @@
-export default function App() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-2xl font-semibold text-accent">SafDash</h1>
-    </div>
-  )
-}
+import { Dashboard } from './components/Dashboard'
+export default function App() { return <Dashboard /> }
