@@ -9,7 +9,7 @@ interface TasksWidgetProps {
   filter: 'all' | 'active' | 'done'
   stats: { total: number; active: number; done: number }
   onFilterChange: (f: 'all' | 'active' | 'done') => void
-  onAdd: (title: string, priority: Task['priority']) => void
+  onAdd: (title: string, priority: Task['priority']) => boolean
   onToggle: (id: string) => void
   onDelete: (id: string) => void
   onClearCompleted: () => void
@@ -27,11 +27,23 @@ export function TasksWidget({
 }: TasksWidgetProps) {
   const [input, setInput] = useState('')
   const [priority, setPriority] = useState<Task['priority']>('medium')
+  const [hint, setHint] = useState<string | null>(null)
+  const canAdd = input.trim().length > 0
+
+  const handleAdd = () => {
+    if (!canAdd) {
+      setHint('Type a task name first')
+      return
+    }
+    if (onAdd(input, priority)) {
+      setInput('')
+      setHint(null)
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onAdd(input, priority)
-    setInput('')
+    handleAdd()
   }
 
   return (
@@ -50,7 +62,10 @@ export function TasksWidget({
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              if (hint) setHint(null)
+            }}
             placeholder="Add a task..."
             className="flex-1 rounded-lg border border-slate-600/60 bg-surface px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none"
           />
@@ -65,12 +80,17 @@ export function TasksWidget({
           </select>
           <button
             type="submit"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/20 text-accent transition hover:bg-accent/30"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${
+              canAdd
+                ? 'bg-accent/20 text-accent hover:bg-accent/30'
+                : 'bg-slate-700/40 text-slate-500'
+            }`}
             aria-label="Add task"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="pointer-events-none h-4 w-4" />
           </button>
         </form>
+        {hint && <p className="mb-3 text-xs text-warning">{hint}</p>}
 
         <div className="mb-3 flex gap-1">
           {(['all', 'active', 'done'] as const).map((f) => (
