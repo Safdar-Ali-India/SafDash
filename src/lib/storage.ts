@@ -11,5 +11,9 @@ export function loadJSON<T>(key: string, fallback: T): T {
 }
 
 export function saveJSON<T>(key: string, value: T): void {
-  localStorage.setItem(PREFIX + key, JSON.stringify(value))
+  try {
+    localStorage.setItem(PREFIX + key, JSON.stringify(value))
+  } catch {
+    // Ignore quota / private-mode errors — in-memory state still works
+  }
 }

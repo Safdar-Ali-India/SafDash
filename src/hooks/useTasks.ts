@@ -2,8 +2,20 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Task } from '../types'
 import { loadJSON, saveJSON } from '../lib/storage'
 
+function createTaskId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function loadTasks(): Task[] {
+  const loaded = loadJSON<Task[]>('tasks', [])
+  return Array.isArray(loaded) ? loaded : []
+}
+
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>(() => loadJSON('tasks', []))
+  const [tasks, setTasks] = useState<Task[]>(loadTasks)
   const [filter, setFilter] = useState<'all' | 'active' | 'done'>('all')
 
   useEffect(() => {
@@ -11,15 +23,18 @@ export function useTasks() {
   }, [tasks])
 
   const addTask = useCallback((title: string, priority: Task['priority'] = 'medium') => {
-    if (!title.trim()) return
+    const trimmed = title.trim()
+    if (!trimmed) return false
     const task: Task = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
+      id: createTaskId(),
+      title: trimmed,
       completed: false,
       priority,
       createdAt: new Date().toISOString(),
     }
     setTasks((prev) => [task, ...prev])
+    setFilter('all')
+    return true
   }, [])
 
   const toggleTask = useCallback((id: string) => {
