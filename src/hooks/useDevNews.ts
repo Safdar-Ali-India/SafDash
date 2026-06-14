@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DevArticle, HNStory } from '../types'
+import { sanitizeExternalUrl } from '../lib/security'
 
 interface NewsState {
   devArticles: DevArticle[]
@@ -33,11 +34,11 @@ export function useDevNews(refreshKey: Date) {
       const devArticles: DevArticle[] = devData.map((a: Record<string, unknown>) => ({
         id: Number(a.id),
         title: String(a.title),
-        url: String(a.url),
+        url: sanitizeExternalUrl(String(a.url)) ?? 'https://dev.to',
         description: String(a.description ?? ''),
         author: String((a.user as { username: string })?.username ?? 'unknown'),
         publishedAt: String(a.published_at),
-        tags: (a.tag_list as string[]) ?? [],
+        tags: Array.isArray(a.tag_list) ? (a.tag_list as string[]).map(String).slice(0, 10) : [],
         reactions: Number(a.public_reactions_count ?? 0),
         comments: Number(a.comments_count ?? 0),
       }))
@@ -48,14 +49,15 @@ export function useDevNews(refreshKey: Date) {
           const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
           if (!res.ok) return null
           const item = await res.json()
+          const rawUrl = item.url ?? `https://news.ycombinator.com/item?id=${item.id}`
           return {
             id: item.id,
-            title: item.title,
-            url: item.url ?? `https://news.ycombinator.com/item?id=${item.id}`,
-            score: item.score,
-            by: item.by,
-            time: item.time,
-            descendants: item.descendants ?? 0,
+            title: String(item.title ?? 'Untitled'),
+            url: sanitizeExternalUrl(String(rawUrl)) ?? `https://news.ycombinator.com/item?id=${item.id}`,
+            score: Number(item.score ?? 0),
+            by: String(item.by ?? 'unknown'),
+            time: Number(item.time ?? 0),
+            descendants: Number(item.descendants ?? 0),
           } as HNStory
         })
       )
