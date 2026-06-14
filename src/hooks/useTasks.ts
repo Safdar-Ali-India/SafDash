@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Task } from '../types'
+import { parseStoredTasks, sanitizeTaskTitle } from '../lib/security'
 import { loadJSON, saveJSON } from '../lib/storage'
 
 function createTaskId(): string {
@@ -10,8 +11,7 @@ function createTaskId(): string {
 }
 
 function loadTasks(): Task[] {
-  const loaded = loadJSON<Task[]>('tasks', [])
-  return Array.isArray(loaded) ? loaded : []
+  return parseStoredTasks(loadJSON('tasks', []))
 }
 
 export function useTasks() {
@@ -23,7 +23,7 @@ export function useTasks() {
   }, [tasks])
 
   const addTask = useCallback((title: string, priority: Task['priority'] = 'medium') => {
-    const trimmed = title.trim()
+    const trimmed = sanitizeTaskTitle(title)
     if (!trimmed) return false
     const task: Task = {
       id: createTaskId(),

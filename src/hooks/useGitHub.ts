@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { GitHubEvent, GitHubProfile } from '../types'
+import { sanitizeGitHubUsername } from '../lib/security'
 
 interface GitHubState {
   profile: GitHubProfile | null
@@ -17,7 +18,9 @@ export function useGitHub(username: string, refreshKey: Date) {
   })
 
   const fetchData = useCallback(async () => {
-    if (!username.trim()) {
+    const safeUsername = sanitizeGitHubUsername(username)
+
+    if (!safeUsername) {
       setState({ profile: null, events: [], loading: false, error: 'Enter a GitHub username in settings' })
       return
     }
@@ -25,12 +28,13 @@ export function useGitHub(username: string, refreshKey: Date) {
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
     try {
+      const encoded = encodeURIComponent(safeUsername)
       const [profileRes, eventsRes] = await Promise.all([
-        fetch(`https://api.github.com/users/${username}`),
-        fetch(`https://api.github.com/users/${username}/events/public?per_page=8`),
+        fetch(`https://api.github.com/users/${encoded}`),
+        fetch(`https://api.github.com/users/${encoded}/events/public?per_page=8`),
       ])
 
-      if (!profileRes.ok) throw new Error(`User "${username}" not found`)
+      if (!profileRes.ok) throw new Error(`User "${safeUsername}" not found`)
 
       const profileData = await profileRes.json()
       const eventsData = eventsRes.ok ? await eventsRes.json() : []

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DashboardSettings, WidgetConfig } from '../types'
 import { loadJSON, saveJSON } from '../lib/storage'
+import { clampRefreshInterval, parseStoredSettings, sanitizeGitHubUsername } from '../lib/security'
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'stats', label: 'Quick Stats', description: 'GitHub profile overview', enabled: true, span: 'full' },
@@ -18,7 +19,7 @@ const DEFAULT_SETTINGS: DashboardSettings = {
 
 export function useDashboard() {
   const [settings, setSettings] = useState<DashboardSettings>(() =>
-    loadJSON('settings', DEFAULT_SETTINGS)
+    parseStoredSettings(loadJSON('settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS)
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
@@ -28,7 +29,16 @@ export function useDashboard() {
   }, [settings])
 
   const updateSettings = useCallback((patch: Partial<DashboardSettings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }))
+    setSettings((prev) => ({
+      ...prev,
+      ...patch,
+      ...(patch.githubUsername !== undefined
+        ? { githubUsername: sanitizeGitHubUsername(patch.githubUsername) || prev.githubUsername }
+        : {}),
+      ...(patch.refreshInterval !== undefined
+        ? { refreshInterval: clampRefreshInterval(patch.refreshInterval) }
+        : {}),
+    }))
   }, [])
 
   const toggleWidget = useCallback((id: WidgetConfig['id']) => {
