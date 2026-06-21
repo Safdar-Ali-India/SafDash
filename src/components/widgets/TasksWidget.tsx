@@ -58,7 +58,7 @@ export function TasksWidget({
         }
       />
       <CardBody>
-        <form onSubmit={handleSubmit} className="mb-4 flex gap-2">
+        <form onSubmit={handleSubmit} className="mb-4 flex items-center gap-2">
           <input
             type="text"
             value={input}
@@ -67,12 +67,13 @@ export function TasksWidget({
               if (hint) setHint(null)
             }}
             placeholder="Add a task..."
-            className="flex-1 rounded-lg border border-slate-600/60 bg-surface px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none"
+            className="h-9 flex-1 rounded-lg border border-slate-600/60 bg-surface px-3 text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/40"
           />
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as Task['priority'])}
-            className="rounded-lg border border-slate-600/60 bg-surface px-2 py-2 text-xs text-slate-300 focus:outline-none"
+            aria-label="Task priority"
+            className="task-priority-select h-9 w-[4.75rem] shrink-0 cursor-pointer rounded-lg border border-slate-600/60 bg-surface px-3 text-sm text-slate-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/40"
           >
             <option value="low">Low</option>
             <option value="medium">Med</option>
